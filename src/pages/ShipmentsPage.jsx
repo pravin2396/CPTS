@@ -41,7 +41,6 @@ export const ShipmentsPage = () => {
     isLoading,
     deleteShipment,
     resetShipmentsToDefault,
-    refreshRemoteShipments,
     PARCEL_TYPES,
     DELIVERY_STATUSES
   } = useShipments();
@@ -175,15 +174,6 @@ export const ShipmentsPage = () => {
 
           <div className="flex items-center gap-2.5">
             <button
-              onClick={refreshRemoteShipments}
-              title="Sync with Third-Party API (GET /posts)"
-              className="p-2 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-xl transition-colors cursor-pointer text-xs flex items-center gap-1.5"
-            >
-              <Sparkles className="h-4 w-4" />
-              <span className="hidden sm:inline">Sync API</span>
-            </button>
-
-            <button
               onClick={resetShipmentsToDefault}
               title="Reset to default seed data"
               className="p-2 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-xl transition-colors cursor-pointer text-xs flex items-center gap-1.5"
@@ -205,8 +195,8 @@ export const ShipmentsPage = () => {
           </div>
         </header>
 
-        {/* Content Area */}
-        <main className="flex-1 p-4 sm:p-8 space-y-6 max-w-7xl w-full mx-auto relative z-10">
+        {/* Content Area (Edge-to-Edge Stretched) */}
+        <main className="flex-1 p-4 sm:p-8 space-y-6 w-full relative z-10">
           
           {/* Top Quick Status Overview KPI Cards with Integrated Icons */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
