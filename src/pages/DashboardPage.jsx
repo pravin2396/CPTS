@@ -143,8 +143,8 @@ export const DashboardPage = () => {
           </div>
         </header>
 
-        {/* MAIN DASHBOARD CONTENT */}
-        <main className="relative z-10 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        {/* MAIN DASHBOARD CONTENT (Edge-to-Edge Stretched) */}
+        <main className="relative z-10 w-full px-4 sm:px-6 lg:px-8 py-8 space-y-8">
           
           {/* Welcome & Status Banner */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
