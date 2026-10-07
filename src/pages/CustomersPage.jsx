@@ -1,17 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useShipments } from '../context/ShipmentContext';
+import { useCustomers } from '../context/CustomerContext';
 import { Sidebar } from '../components/Sidebar';
-import { ShipmentModal } from '../components/ShipmentModal';
-import { ShipmentDetailsModal } from '../components/ShipmentDetailsModal';
+import { CustomerModal } from '../components/CustomerModal';
+import { CustomerProfileModal } from '../components/CustomerProfileModal';
+import { ConfirmModal, EmptyState, SkeletonRow } from '../components/ui/FeedbackComponents';
 import {
-  StatusBadge,
-  ConfirmModal,
-  EmptyState,
-  SkeletonRow
-} from '../components/ui/FeedbackComponents';
-import {
-  Boxes,
+  Users,
   Plus,
   Search,
   X,
@@ -22,100 +17,99 @@ import {
   Eye,
   Edit2,
   Trash2,
+  Mail,
+  Phone,
   MapPin,
+  Building,
   Sparkles,
   Menu,
   RotateCcw,
-  Package,
-  Truck,
   CheckCircle2,
-  Clock,
-  ExternalLink
+  UserCheck,
+  ExternalLink,
+  Package
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 
-export const ShipmentsPage = () => {
+export const CustomersPage = () => {
   const navigate = useNavigate();
   const {
-    shipments,
+    customers,
     isLoading,
-    deleteShipment,
-    resetShipmentsToDefault,
-    PARCEL_TYPES,
-    DELIVERY_STATUSES
-  } = useShipments();
+    deleteCustomer,
+    resetCustomersToDefault
+  } = useCustomers();
 
   // Navigation & Drawer
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedType, setSelectedType] = useState('ALL');
   const [selectedStatus, setSelectedStatus] = useState('ALL');
-  const [sortBy, setSortBy] = useState('date-desc'); // 'date-desc', 'date-asc', 'delivery-asc'
+  const [sortBy, setSortBy] = useState('name-asc'); // 'name-asc', 'name-desc', 'shipments-desc', 'newest'
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
   // Modals State
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [shipmentToEdit, setShipmentToEdit] = useState(null);
-  const [shipmentToView, setShipmentToView] = useState(null);
-  const [shipmentToDelete, setShipmentToDelete] = useState(null);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [customerToEdit, setCustomerToEdit] = useState(null);
+  const [customerToView, setCustomerToView] = useState(null);
+  const [customerToDelete, setCustomerToDelete] = useState(null);
 
-  // Compute stats for header pills
-  const totalCount = shipments.length;
-  const inTransitCount = shipments.filter((s) => s.deliveryStatus === 'In Transit').length;
-  const deliveredCount = shipments.filter((s) => s.deliveryStatus === 'Delivered').length;
-  const bookedCount = shipments.filter((s) => s.deliveryStatus === 'Booked').length;
+  // Computed KPI Metrics
+  const totalCount = customers.length;
+  const activeCount = customers.filter((c) => c.status === 'Active').length;
+  const citiesCount = new Set(customers.map((c) => c.city).filter(Boolean)).size;
+  const totalShipmentsHandled = customers.reduce((sum, c) => sum + (c.totalShipments || 0), 0);
 
   // Filter & Sort Logic
-  const filteredAndSortedShipments = useMemo(() => {
-    return shipments
+  const filteredAndSortedCustomers = useMemo(() => {
+    return customers
       .filter((item) => {
         // Status filter
-        if (selectedStatus !== 'ALL' && item.deliveryStatus !== selectedStatus) {
+        if (selectedStatus !== 'ALL' && item.status !== selectedStatus) {
           return false;
         }
-        // Type filter
-        if (selectedType !== 'ALL' && item.parcelType !== selectedType) {
-          return false;
-        }
+
         // Search query
         if (searchQuery.trim()) {
           const q = searchQuery.toLowerCase();
-          const matchTracking = item.trackingNumber?.toLowerCase().includes(q);
-          const matchSender = item.senderName?.toLowerCase().includes(q);
-          const matchReceiver = item.receiverName?.toLowerCase().includes(q);
-          const matchPickup = item.pickupAddress?.toLowerCase().includes(q);
-          const matchDelivery = item.deliveryAddress?.toLowerCase().includes(q);
-          return matchTracking || matchSender || matchReceiver || matchPickup || matchDelivery;
+          const matchName = item.name?.toLowerCase().includes(q);
+          const matchEmail = item.email?.toLowerCase().includes(q);
+          const matchMobile = item.mobile?.toLowerCase().includes(q);
+          const matchAddress = item.address?.toLowerCase().includes(q);
+          const matchCity = item.city?.toLowerCase().includes(q);
+          const matchPostal = item.postalCode?.toLowerCase().includes(q);
+          return matchName || matchEmail || matchMobile || matchAddress || matchCity || matchPostal;
         }
         return true;
       })
       .sort((a, b) => {
-        if (sortBy === 'date-desc') {
-          return new Date(b.shippingDate) - new Date(a.shippingDate);
+        if (sortBy === 'name-asc') {
+          return a.name.localeCompare(b.name);
         }
-        if (sortBy === 'date-asc') {
-          return new Date(a.shippingDate) - new Date(b.shippingDate);
+        if (sortBy === 'name-desc') {
+          return b.name.localeCompare(a.name);
         }
-        if (sortBy === 'delivery-asc') {
-          return new Date(a.expectedDeliveryDate) - new Date(b.expectedDeliveryDate);
+        if (sortBy === 'shipments-desc') {
+          return (b.totalShipments || 0) - (a.totalShipments || 0);
+        }
+        if (sortBy === 'newest') {
+          return new Date(b.joinedDate || '2026-01-01') - new Date(a.joinedDate || '2026-01-01');
         }
         return 0;
       });
-  }, [shipments, selectedStatus, selectedType, searchQuery, sortBy]);
+  }, [customers, selectedStatus, searchQuery, sortBy]);
 
-  // Pagination Calculations
-  const totalPages = Math.ceil(filteredAndSortedShipments.length / itemsPerPage) || 1;
-  const paginatedShipments = useMemo(() => {
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredAndSortedCustomers.length / itemsPerPage) || 1;
+  const paginatedCustomers = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredAndSortedShipments.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredAndSortedShipments, currentPage, itemsPerPage]);
+    return filteredAndSortedCustomers.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredAndSortedCustomers, currentPage, itemsPerPage]);
 
-  // Reset to page 1 whenever filters change
   const handleFilterChange = (setter, value) => {
     setter(value);
     setCurrentPage(1);
@@ -123,17 +117,16 @@ export const ShipmentsPage = () => {
 
   const handleClearFilters = () => {
     setSearchQuery('');
-    setSelectedType('ALL');
     setSelectedStatus('ALL');
-    setSortBy('date-desc');
+    setSortBy('name-asc');
     setCurrentPage(1);
-    toast.info('Shipment filters cleared.');
+    toast.info('Customer filters cleared.');
   };
 
   const handleConfirmDelete = async () => {
-    if (shipmentToDelete) {
-      await deleteShipment(shipmentToDelete.id);
-      setShipmentToDelete(null);
+    if (customerToDelete) {
+      await deleteCustomer(customerToDelete.id);
+      setCustomerToDelete(null);
     }
   };
 
@@ -166,15 +159,15 @@ export const ShipmentsPage = () => {
 
             <div>
               <h1 className="text-base sm:text-lg font-black text-white tracking-tight flex items-center gap-2">
-                <Boxes className="h-5 w-5 text-amber-400" />
-                <span>Shipment Management</span>
+                <Users className="h-5 w-5 text-amber-400" />
+                <span>Customer Management</span>
               </h1>
             </div>
           </div>
 
           <div className="flex items-center gap-2.5">
             <button
-              onClick={resetShipmentsToDefault}
+              onClick={resetCustomersToDefault}
               title="Reset to default seed data"
               className="p-2 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-xl transition-colors cursor-pointer text-xs flex items-center gap-1.5"
             >
@@ -184,13 +177,13 @@ export const ShipmentsPage = () => {
 
             <button
               onClick={() => {
-                setShipmentToEdit(null);
-                setIsCreateModalOpen(true);
+                setCustomerToEdit(null);
+                setIsAddModalOpen(true);
               }}
               className="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 rounded-xl text-xs sm:text-sm font-black transition-all shadow-lg shadow-amber-500/25 cursor-pointer"
             >
               <Plus className="h-4 w-4 stroke-[3]" />
-              <span>Create Shipment</span>
+              <span>Add Customer</span>
             </button>
           </div>
         </header>
@@ -198,84 +191,84 @@ export const ShipmentsPage = () => {
         {/* Content Area */}
         <main className="flex-1 p-4 sm:p-8 space-y-6 max-w-7xl w-full mx-auto relative z-10">
           
-          {/* Top Quick Status Overview KPI Cards with Integrated Icons */}
+          {/* Top KPI Cards with Integrated Icons (Theme 4) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-            {/* 1. Total Shipments */}
+            {/* 1. Total Customers */}
             <div className="bg-[#141822]/90 backdrop-blur-xl p-5 rounded-[24px] border border-amber-500/20 shadow-lg flex items-center justify-between hover:border-amber-500/40 transition-all">
               <div>
                 <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Total Shipments
+                  Total Customers
                 </span>
                 <span className="text-2xl sm:text-3xl font-black text-white mt-1 block font-mono">
                   {totalCount}
                 </span>
                 <span className="text-[11px] text-amber-400/90 font-medium flex items-center gap-1 mt-1">
-                  All Consignments
+                  Directory Accounts
+                </span>
+              </div>
+              <div className="h-12 w-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20 shadow-inner shrink-0">
+                <Users className="h-6 w-6" />
+              </div>
+            </div>
+
+            {/* 2. Active Accounts */}
+            <div className="bg-[#141822]/90 backdrop-blur-xl p-5 rounded-[24px] border border-emerald-500/20 shadow-lg flex items-center justify-between hover:border-emerald-500/40 transition-all">
+              <div>
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                  Active Accounts
+                </span>
+                <span className="text-2xl sm:text-3xl font-black text-emerald-400 mt-1 block font-mono">
+                  {activeCount}
+                </span>
+                <span className="text-[11px] text-emerald-300/80 font-medium flex items-center gap-1 mt-1">
+                  Verified Clients
+                </span>
+              </div>
+              <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20 shadow-inner shrink-0">
+                <UserCheck className="h-6 w-6" />
+              </div>
+            </div>
+
+            {/* 3. Cities Served */}
+            <div className="bg-[#141822]/90 backdrop-blur-xl p-5 rounded-[24px] border border-blue-500/20 shadow-lg flex items-center justify-between hover:border-blue-500/40 transition-all">
+              <div>
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                  Hub Cities
+                </span>
+                <span className="text-2xl sm:text-3xl font-black text-blue-400 mt-1 block font-mono">
+                  {citiesCount}
+                </span>
+                <span className="text-[11px] text-blue-300/80 font-medium flex items-center gap-1 mt-1">
+                  Nationwide Coverage
+                </span>
+              </div>
+              <div className="h-12 w-12 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20 shadow-inner shrink-0">
+                <MapPin className="h-6 w-6" />
+              </div>
+            </div>
+
+            {/* 4. Total Dispatches */}
+            <div className="bg-[#141822]/90 backdrop-blur-xl p-5 rounded-[24px] border border-amber-500/20 shadow-lg flex items-center justify-between hover:border-amber-500/40 transition-all">
+              <div>
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+                  Total Dispatches
+                </span>
+                <span className="text-2xl sm:text-3xl font-black text-amber-400 mt-1 block font-mono">
+                  {totalShipmentsHandled}
+                </span>
+                <span className="text-[11px] text-amber-300/80 font-medium flex items-center gap-1 mt-1">
+                  Parcels Generated
                 </span>
               </div>
               <div className="h-12 w-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20 shadow-inner shrink-0">
                 <Package className="h-6 w-6" />
               </div>
             </div>
-
-            {/* 2. In Transit */}
-            <div className="bg-[#141822]/90 backdrop-blur-xl p-5 rounded-[24px] border border-blue-500/20 shadow-lg flex items-center justify-between hover:border-blue-500/40 transition-all">
-              <div>
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                  In Transit
-                </span>
-                <span className="text-2xl sm:text-3xl font-black text-blue-400 mt-1 block font-mono">
-                  {inTransitCount}
-                </span>
-                <span className="text-[11px] text-blue-300/80 font-medium flex items-center gap-1 mt-1">
-                  Carrier En Route
-                </span>
-              </div>
-              <div className="h-12 w-12 rounded-2xl bg-blue-500/10 text-blue-400 flex items-center justify-center border border-blue-500/20 shadow-inner shrink-0">
-                <Truck className="h-6 w-6" />
-              </div>
-            </div>
-
-            {/* 3. Delivered */}
-            <div className="bg-[#141822]/90 backdrop-blur-xl p-5 rounded-[24px] border border-emerald-500/20 shadow-lg flex items-center justify-between hover:border-emerald-500/40 transition-all">
-              <div>
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Delivered
-                </span>
-                <span className="text-2xl sm:text-3xl font-black text-emerald-400 mt-1 block font-mono">
-                  {deliveredCount}
-                </span>
-                <span className="text-[11px] text-emerald-300/80 font-medium flex items-center gap-1 mt-1">
-                  Handed Over
-                </span>
-              </div>
-              <div className="h-12 w-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20 shadow-inner shrink-0">
-                <CheckCircle2 className="h-6 w-6" />
-              </div>
-            </div>
-
-            {/* 4. Booked / Pending */}
-            <div className="bg-[#141822]/90 backdrop-blur-xl p-5 rounded-[24px] border border-amber-500/20 shadow-lg flex items-center justify-between hover:border-amber-500/40 transition-all">
-              <div>
-                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
-                  Booked / Pending
-                </span>
-                <span className="text-2xl sm:text-3xl font-black text-amber-400 mt-1 block font-mono">
-                  {bookedCount}
-                </span>
-                <span className="text-[11px] text-amber-300/80 font-medium flex items-center gap-1 mt-1">
-                  Awaiting Dispatch
-                </span>
-              </div>
-              <div className="h-12 w-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20 shadow-inner shrink-0">
-                <Clock className="h-6 w-6" />
-              </div>
-            </div>
           </div>
 
-          {/* Search, Filters & Sorting Toolbar */}
+          {/* Search, Status & Sorting Toolbar */}
           <div className="bg-[#141822]/90 backdrop-blur-xl p-4 sm:p-5 rounded-[24px] border border-amber-500/20 shadow-xl space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               
               {/* Search Bar with Clear X Button */}
               <div className="relative">
@@ -284,7 +277,7 @@ export const ShipmentsPage = () => {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => handleFilterChange(setSearchQuery, e.target.value)}
-                  placeholder="Search tracking, sender, address..."
+                  placeholder="Search by name, email, phone, city..."
                   className="w-full pl-10 pr-9 py-2.5 text-xs sm:text-sm bg-[#141822] border border-slate-700/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-amber-400 text-white placeholder-slate-500"
                 />
                 {searchQuery && (
@@ -299,58 +292,40 @@ export const ShipmentsPage = () => {
                 )}
               </div>
 
-              {/* Filter by Shipment Type */}
-              <div className="relative">
-                <select
-                  value={selectedType}
-                  onChange={(e) => handleFilterChange(setSelectedType, e.target.value)}
-                  className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-[#141822] text-slate-200 border border-slate-700/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer"
-                >
-                  <option value="ALL">All Parcel Types</option>
-                  {PARCEL_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Filter by Delivery Status */}
+              {/* Status Filter */}
               <div className="relative">
                 <select
                   value={selectedStatus}
                   onChange={(e) => handleFilterChange(setSelectedStatus, e.target.value)}
                   className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-[#141822] text-slate-200 border border-slate-700/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer"
                 >
-                  <option value="ALL">All Delivery Statuses</option>
-                  {DELIVERY_STATUSES.map((s) => (
-                    <option key={s} value={s}>
-                      {s}
-                    </option>
-                  ))}
+                  <option value="ALL">All Account Statuses</option>
+                  <option value="Active">Active Accounts</option>
+                  <option value="Inactive">Inactive Accounts</option>
                 </select>
               </div>
 
-              {/* Sort by Shipment Date */}
+              {/* Sort Order */}
               <div className="relative">
                 <select
                   value={sortBy}
                   onChange={(e) => handleFilterChange(setSortBy, e.target.value)}
                   className="w-full px-3.5 py-2.5 text-xs sm:text-sm bg-[#141822] text-slate-200 border border-slate-700/80 rounded-xl focus:outline-none focus:ring-1 focus:ring-amber-400 cursor-pointer"
                 >
-                  <option value="date-desc">Shipping Date: Newest First</option>
-                  <option value="date-asc">Shipping Date: Oldest First</option>
-                  <option value="delivery-asc">Expected Delivery: Soonest</option>
+                  <option value="name-asc">Customer Name (A to Z)</option>
+                  <option value="name-desc">Customer Name (Z to A)</option>
+                  <option value="shipments-desc">Highest Shipments Sent</option>
+                  <option value="newest">Recently Registered</option>
                 </select>
               </div>
             </div>
 
-            {/* Active filter counter & Reset button */}
+            {/* Filter Summary & Clear Action */}
             <div className="flex items-center justify-between pt-1 text-xs text-slate-400">
               <span>
-                Showing <strong className="text-white">{filteredAndSortedShipments.length}</strong> matching shipments
+                Showing <strong className="text-white">{filteredAndSortedCustomers.length}</strong> matching customers
               </span>
-              {(searchQuery || selectedType !== 'ALL' || selectedStatus !== 'ALL') && (
+              {(searchQuery || selectedStatus !== 'ALL') && (
                 <button
                   type="button"
                   onClick={handleClearFilters}
@@ -363,7 +338,7 @@ export const ShipmentsPage = () => {
             </div>
           </div>
 
-          {/* Shipments Table Container */}
+          {/* Customer Directory Table */}
           <div className="bg-[#141822]/90 backdrop-blur-xl rounded-[28px] border border-amber-500/20 shadow-xl overflow-hidden">
             {isLoading ? (
               <div className="p-6">
@@ -372,16 +347,15 @@ export const ShipmentsPage = () => {
                     <SkeletonRow />
                     <SkeletonRow />
                     <SkeletonRow />
-                    <SkeletonRow />
                   </tbody>
                 </table>
               </div>
-            ) : paginatedShipments.length === 0 ? (
+            ) : paginatedCustomers.length === 0 ? (
               <div className="p-8">
                 <EmptyState
-                  icon={Package}
-                  title="No Shipments Matching Filters"
-                  description="We could not find any consignments matching your search keywords or filter options."
+                  icon={Users}
+                  title="No Customers Found"
+                  description="We could not find any customers matching your search query or status filter."
                   actionText="Reset Filters"
                   onAction={handleClearFilters}
                 />
@@ -391,108 +365,132 @@ export const ShipmentsPage = () => {
                 <table className="w-full text-left text-xs">
                   <thead>
                     <tr className="border-b border-slate-800 bg-[#10141d]/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      <th className="py-4 px-4 sm:px-6">Tracking Number</th>
-                      <th className="py-4 px-4">Origin / Sender</th>
-                      <th className="py-4 px-4">Destination / Receiver</th>
-                      <th className="py-4 px-4">Type & Weight</th>
-                      <th className="py-4 px-4">Shipping / Expected</th>
+                      <th className="py-4 px-4 sm:px-6">Customer Name</th>
+                      <th className="py-4 px-4">Contact Info</th>
+                      <th className="py-4 px-4">Address & City</th>
+                      <th className="py-4 px-4">Postal Code</th>
                       <th className="py-4 px-4">Status</th>
                       <th className="py-4 px-4 sm:px-6 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60 font-medium">
-                    {paginatedShipments.map((s) => (
-                      <tr key={s.id} className="hover:bg-[#181d2a]/70 transition-colors group">
+                    {paginatedCustomers.map((c) => (
+                      <tr key={c.id} className="hover:bg-[#181d2a]/70 transition-colors group">
                         
-                        {/* Tracking Number */}
+                        {/* Customer Name + Avatar Initials */}
                         <td className="py-4 px-4 sm:px-6">
-                          <button
-                            type="button"
-                            onClick={() => setShipmentToView(s)}
-                            className="font-mono font-bold text-amber-400 hover:text-amber-300 hover:underline cursor-pointer block text-left"
-                            title="Click to view details"
-                          >
-                            {s.trackingNumber}
-                          </button>
-                          <span className="text-[10px] text-slate-500">ID #{s.id}</span>
+                          <div className="flex items-center gap-3">
+                            <div className="h-9 w-9 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 font-bold flex items-center justify-center shrink-0">
+                              {c.name
+                                .split(' ')
+                                .map((n) => n[0])
+                                .slice(0, 2)
+                                .join('')
+                                .toUpperCase()}
+                            </div>
+                            <div>
+                              <button
+                                type="button"
+                                onClick={() => setCustomerToView(c)}
+                                className="font-bold text-white hover:text-amber-400 hover:underline cursor-pointer block text-left"
+                                title="Click to view profile"
+                              >
+                                {c.name}
+                              </button>
+                              <span className="text-[10px] text-slate-500 font-mono">ID #{c.id}</span>
+                            </div>
+                          </div>
                         </td>
 
-                        {/* Sender & Pickup */}
-                        <td className="py-4 px-4 max-w-[180px]">
-                          <span className="text-white font-bold block truncate">{s.senderName}</span>
-                          <span className="text-[11px] text-slate-400 truncate flex items-center gap-1 mt-0.5" title={s.pickupAddress}>
-                            <MapPin className="h-3 w-3 text-amber-400/80 shrink-0" />
-                            <span className="truncate">{s.pickupAddress}</span>
+                        {/* Email & Mobile */}
+                        <td className="py-4 px-4 max-w-[200px]">
+                          <span className="text-slate-200 block truncate flex items-center gap-1.5" title={c.email}>
+                            <Mail className="h-3 w-3 text-amber-400/80 shrink-0" />
+                            <span className="truncate">{c.email}</span>
+                          </span>
+                          <span className="text-[11px] text-slate-400 flex items-center gap-1.5 mt-0.5">
+                            <Phone className="h-3 w-3 text-slate-500 shrink-0" />
+                            <span>{c.mobile}</span>
                           </span>
                         </td>
 
-                        {/* Receiver & Delivery */}
-                        <td className="py-4 px-4 max-w-[180px]">
-                          <span className="text-white font-bold block truncate">{s.receiverName}</span>
-                          <span className="text-[11px] text-slate-400 truncate flex items-center gap-1 mt-0.5" title={s.deliveryAddress}>
+                        {/* Address & City */}
+                        <td className="py-4 px-4 max-w-[220px]">
+                          <span className="text-slate-200 block truncate flex items-center gap-1.5" title={c.address}>
                             <MapPin className="h-3 w-3 text-blue-400/80 shrink-0" />
-                            <span className="truncate">{s.deliveryAddress}</span>
+                            <span className="truncate">{c.address}</span>
+                          </span>
+                          <span className="text-[11px] text-slate-400 block mt-0.5">
+                            {c.city}
                           </span>
                         </td>
 
-                        {/* Parcel Type & Weight */}
+                        {/* Postal Code */}
                         <td className="py-4 px-4">
-                          <span className="text-slate-200 block truncate">{s.parcelType}</span>
-                          <span className="text-[11px] text-amber-400/90 font-bold block">{s.parcelWeight} kg</span>
-                        </td>
-
-                        {/* Shipping & Expected Dates */}
-                        <td className="py-4 px-4">
-                          <span className="text-slate-300 block">{s.shippingDate}</span>
-                          <span className="text-[10px] text-emerald-400 block">Exp: {s.expectedDeliveryDate}</span>
+                          <span className="font-mono font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20 text-[11px]">
+                            {c.postalCode}
+                          </span>
                         </td>
 
                         {/* Status */}
                         <td className="py-4 px-4 whitespace-nowrap">
-                          <StatusBadge status={s.deliveryStatus} />
+                          <span
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold border ${
+                              c.status === 'Active'
+                                ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+                                : 'bg-slate-500/15 text-slate-400 border-slate-500/30'
+                            }`}
+                          >
+                            <span
+                              className={`h-1.5 w-1.5 rounded-full ${
+                                c.status === 'Active' ? 'bg-emerald-400' : 'bg-slate-500'
+                              }`}
+                            />
+                            {c.status}
+                          </span>
                         </td>
 
                         {/* Actions */}
                         <td className="py-4 px-4 sm:px-6 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-1.5">
-                            {/* View Modal */}
+                            {/* Quick Profile Modal */}
                             <button
                               type="button"
-                              onClick={() => setShipmentToView(s)}
-                              title="Quick View Details"
+                              onClick={() => setCustomerToView(c)}
+                              title="Quick View Profile"
                               className="p-1.5 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
                             >
                               <Eye className="h-4 w-4" />
                             </button>
 
-                            {/* Navigate to Dedicated Details Page */}
+                            {/* Navigate to Dedicated Profile Page */}
                             <button
                               type="button"
-                              onClick={() => navigate(`/shipments/${s.id}`)}
-                              title="Open Full Details Page"
+                              onClick={() => navigate(`/customers/${c.id}`)}
+                              title="Open Full Profile Page"
                               className="p-1.5 text-slate-400 hover:text-blue-400 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
                             >
                               <ExternalLink className="h-4 w-4" />
                             </button>
 
-                            {/* Edit */}
+                            {/* Edit Customer */}
                             <button
                               type="button"
                               onClick={() => {
-                                setShipmentToEdit(s);
-                                setIsCreateModalOpen(true);
+                                setCustomerToEdit(c);
+                                setIsAddModalOpen(true);
                               }}
-                              title="Edit Shipment"
+                              title="Edit Customer"
                               className="p-1.5 text-slate-400 hover:text-amber-400 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
                             >
                               <Edit2 className="h-4 w-4" />
                             </button>
 
-                            {/* Delete */}
+                            {/* Delete Customer */}
                             <button
                               type="button"
-                              onClick={() => setShipmentToDelete(s)}
-                              title="Delete Shipment"
+                              onClick={() => setCustomerToDelete(c)}
+                              title="Delete Customer"
                               className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -508,7 +506,7 @@ export const ShipmentsPage = () => {
             )}
 
             {/* Pagination Controls */}
-            {filteredAndSortedShipments.length > 0 && (
+            {filteredAndSortedCustomers.length > 0 && (
               <div className="px-6 py-4 bg-[#10141d]/90 border-t border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
                 <span className="text-slate-400">
                   Showing{' '}
@@ -517,9 +515,9 @@ export const ShipmentsPage = () => {
                   </strong>{' '}
                   to{' '}
                   <strong className="text-white">
-                    {Math.min(currentPage * itemsPerPage, filteredAndSortedShipments.length)}
+                    {Math.min(currentPage * itemsPerPage, filteredAndSortedCustomers.length)}
                   </strong>{' '}
-                  of <strong className="text-white">{filteredAndSortedShipments.length}</strong> consignments
+                  of <strong className="text-white">{filteredAndSortedCustomers.length}</strong> customers
                 </span>
 
                 <div className="flex items-center gap-1.5 self-end sm:self-auto">
@@ -563,38 +561,38 @@ export const ShipmentsPage = () => {
         </main>
       </div>
 
-      {/* Create / Edit Shipment Modal */}
-      <ShipmentModal
-        isOpen={isCreateModalOpen}
+      {/* Add / Edit Customer Modal */}
+      <CustomerModal
+        isOpen={isAddModalOpen}
         onClose={() => {
-          setIsCreateModalOpen(false);
-          setShipmentToEdit(null);
+          setIsAddModalOpen(false);
+          setCustomerToEdit(null);
         }}
-        shipmentToEdit={shipmentToEdit}
+        customerToEdit={customerToEdit}
       />
 
-      {/* Shipment Details View Modal */}
-      <ShipmentDetailsModal
-        isOpen={Boolean(shipmentToView)}
-        onClose={() => setShipmentToView(null)}
-        shipment={shipmentToView}
-        onEdit={(shipment) => {
-          setShipmentToEdit(shipment);
-          setIsCreateModalOpen(true);
+      {/* Customer Quick Profile Modal */}
+      <CustomerProfileModal
+        isOpen={Boolean(customerToView)}
+        onClose={() => setCustomerToView(null)}
+        customer={customerToView}
+        onEdit={(customer) => {
+          setCustomerToEdit(customer);
+          setIsAddModalOpen(true);
         }}
-        onDelete={(shipment) => {
-          setShipmentToDelete(shipment);
+        onDelete={(customer) => {
+          setCustomerToDelete(customer);
         }}
       />
 
       {/* Delete Confirmation Modal */}
       <ConfirmModal
-        isOpen={Boolean(shipmentToDelete)}
-        onClose={() => setShipmentToDelete(null)}
+        isOpen={Boolean(customerToDelete)}
+        onClose={() => setCustomerToDelete(null)}
         onConfirm={handleConfirmDelete}
-        title="Confirm Shipment Deletion"
-        message={`Are you sure you want to permanently delete consignment "${shipmentToDelete?.trackingNumber}"? This cannot be undone.`}
-        confirmText="Yes, Delete Consignment"
+        title="Confirm Customer Deletion"
+        message={`Are you sure you want to permanently delete customer "${customerToDelete?.name}"? All associated account directory records will be removed.`}
+        confirmText="Yes, Delete Customer"
       />
     </div>
   );
