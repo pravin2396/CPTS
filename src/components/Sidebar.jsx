@@ -29,6 +29,11 @@ export const Sidebar = ({ isOpen, onClose }) => {
       path: '/dashboard',
       icon: LayoutDashboard,
       badge: 'Live'
+    },
+    {
+      name: 'Shipments',
+      path: '/shipments',
+      icon: Package
     }
   ];
 

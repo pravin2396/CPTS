@@ -9,23 +9,43 @@ import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { ShipmentsPage } from './pages/ShipmentsPage';
+import { ShipmentDetailsPage } from './pages/ShipmentDetailsPage';
 
 function App() {
   return (
     <>
       <BrowserRouter>
         <Routes>
-          {/* Public Authentication Routes */}
+          {/* Public Authentication Routes (Module 1 - Intact) */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
-          {/* Protected Route for Authenticated Users */}
+          {/* Protected Routes (Module 2: Dashboard - Intact) */}
           <Route
             path="/dashboard"
             element={
               <ProtectedRoute>
                 <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Protected Routes (Module 3: Shipment Management & Details) */}
+          <Route
+            path="/shipments"
+            element={
+              <ProtectedRoute>
+                <ShipmentsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/shipments/:id"
+            element={
+              <ProtectedRoute>
+                <ShipmentDetailsPage />
               </ProtectedRoute>
             }
           />

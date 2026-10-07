@@ -4,6 +4,7 @@ import './index.css'
 import App from './App.jsx'
 import { AuthProvider } from './context/AuthContext'
 import { DashboardProvider } from './context/DashboardContext'
+import { ShipmentProvider } from './context/ShipmentContext'
 import { cleanupPreviousProjectStorage } from './utils/storageCleanup'
 
 cleanupPreviousProjectStorage()
@@ -12,9 +13,10 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <AuthProvider>
       <DashboardProvider>
-        <App />
+        <ShipmentProvider>
+          <App />
+        </ShipmentProvider>
       </DashboardProvider>
     </AuthProvider>
   </StrictMode>,
 )
-
