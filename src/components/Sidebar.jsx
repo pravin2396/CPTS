@@ -44,6 +44,11 @@ export const Sidebar = ({ isOpen, onClose }) => {
       name: 'Parcel Tracking',
       path: '/tracking',
       icon: Truck
+    },
+    {
+      name: 'Delivery Status',
+      path: '/delivery-status',
+      icon: Activity
     }
   ];
 

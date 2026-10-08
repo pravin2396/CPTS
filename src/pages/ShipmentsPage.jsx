@@ -68,7 +68,7 @@ export const ShipmentsPage = () => {
   const totalCount = shipments.length;
   const inTransitCount = shipments.filter((s) => s.deliveryStatus === 'In Transit').length;
   const deliveredCount = shipments.filter((s) => s.deliveryStatus === 'Delivered').length;
-  const bookedCount = shipments.filter((s) => s.deliveryStatus === 'Booked').length;
+  const bookedCount = shipments.filter((s) => s.deliveryStatus === 'Pending' || s.deliveryStatus === 'Booked').length;
 
   // Filter & Sort Logic
   const filteredAndSortedShipments = useMemo(() => {
@@ -196,7 +196,7 @@ export const ShipmentsPage = () => {
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 p-4 sm:p-8 space-y-6 max-w-7xl w-full mx-auto relative z-10">
+        <main className="flex-1 p-4 sm:p-8 space-y-6 w-full relative z-10">
           
           {/* Top Quick Status Overview KPI Cards with Integrated Icons */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">

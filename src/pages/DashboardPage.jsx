@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useDashboard } from '../context/DashboardContext';
 import { useNavigate } from 'react-router-dom';
 import { Sidebar } from '../components/Sidebar';
+import { StatusBadge } from '../components/ui/FeedbackComponents';
 import {
   Boxes,
   Package,
@@ -144,7 +145,7 @@ export const DashboardPage = () => {
         </header>
 
         {/* MAIN DASHBOARD CONTENT */}
-        <main className="relative z-10 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        <main className="relative z-10 w-full px-4 sm:px-6 lg:px-8 py-8 space-y-8">
           
           {/* Welcome & Status Banner */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -451,26 +452,7 @@ export const DashboardPage = () => {
                           <span className="text-[10px] text-slate-500 block">{s.weight}</span>
                         </td>
                         <td className="py-3.5 px-3">
-                          <span
-                            className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${
-                              s.status === 'Delivered'
-                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                                : s.status === 'In Transit'
-                                ? 'bg-blue-500/10 text-blue-400 border-blue-500/30'
-                                : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
-                            }`}
-                          >
-                            <span
-                              className={`h-1.5 w-1.5 rounded-full ${
-                                s.status === 'Delivered'
-                                ? 'bg-emerald-400'
-                                : s.status === 'In Transit'
-                                ? 'bg-blue-400'
-                                : 'bg-amber-400'
-                              }`}
-                            />
-                            {s.status}
-                          </span>
+                          <StatusBadge status={s.status} size="sm" />
                         </td>
                       </tr>
                     ))}

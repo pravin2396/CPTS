@@ -189,7 +189,7 @@ export const CustomersPage = () => {
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 p-4 sm:p-8 space-y-6 max-w-7xl w-full mx-auto relative z-10">
+        <main className="flex-1 p-4 sm:p-8 space-y-6 w-full relative z-10">
           
           {/* Top KPI Cards with Integrated Icons (Theme 4) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">

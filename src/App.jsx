@@ -14,6 +14,7 @@ import { ShipmentDetailsPage } from './pages/ShipmentDetailsPage';
 import { CustomersPage } from './pages/CustomersPage';
 import { CustomerProfilePage } from './pages/CustomerProfilePage';
 import { TrackingPage } from './pages/TrackingPage';
+import { DeliveryStatusPage } from './pages/DeliveryStatusPage';
 
 function App() {
   return (
@@ -85,6 +86,16 @@ function App() {
             element={
               <ProtectedRoute>
                 <TrackingPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Protected Routes (Module 6: Delivery Status & Lifecycle) */}
+          <Route
+            path="/delivery-status"
+            element={
+              <ProtectedRoute>
+                <DeliveryStatusPage />
               </ProtectedRoute>
             }
           />

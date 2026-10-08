@@ -37,7 +37,7 @@ export const ShipmentModal = ({ isOpen, onClose, shipmentToEdit = null }) => {
     parcelType: PARCEL_TYPES[0] || 'Electronics & Gadgets',
     shippingDate: new Date().toISOString().split('T')[0],
     expectedDeliveryDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    deliveryStatus: 'Booked',
+    deliveryStatus: 'Pending',
     notes: ''
   };
 
@@ -59,7 +59,7 @@ export const ShipmentModal = ({ isOpen, onClose, shipmentToEdit = null }) => {
           parcelType: shipmentToEdit.parcelType || PARCEL_TYPES[0],
           shippingDate: shipmentToEdit.shippingDate || new Date().toISOString().split('T')[0],
           expectedDeliveryDate: shipmentToEdit.expectedDeliveryDate || new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          deliveryStatus: shipmentToEdit.deliveryStatus || 'Booked',
+          deliveryStatus: shipmentToEdit.deliveryStatus === 'Booked' ? 'Pending' : (shipmentToEdit.deliveryStatus || 'Pending'),
           notes: shipmentToEdit.notes || ''
         });
       } else {
