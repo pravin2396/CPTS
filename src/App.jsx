@@ -15,6 +15,7 @@ import { CustomersPage } from './pages/CustomersPage';
 import { CustomerProfilePage } from './pages/CustomerProfilePage';
 import { TrackingPage } from './pages/TrackingPage';
 import { DeliveryStatusPage } from './pages/DeliveryStatusPage';
+import { NotificationsPage } from './pages/NotificationsPage';
 
 function App() {
   return (
@@ -96,6 +97,16 @@ function App() {
             element={
               <ProtectedRoute>
                 <DeliveryStatusPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Protected Routes (Module 7: Notifications Center) */}
+          <Route
+            path="/notifications"
+            element={
+              <ProtectedRoute>
+                <NotificationsPage />
               </ProtectedRoute>
             }
           />

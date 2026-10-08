@@ -4,6 +4,7 @@ import { useDashboard } from '../context/DashboardContext';
 import { useNavigate } from 'react-router-dom';
 import { Sidebar } from '../components/Sidebar';
 import { StatusBadge } from '../components/ui/FeedbackComponents';
+import { NotificationBell } from '../components/notifications/NotificationBell';
 import {
   Boxes,
   Package,
@@ -117,6 +118,9 @@ export const DashboardPage = () => {
               <RefreshCw className="h-3.5 w-3.5 text-amber-400" />
               <span>Reset Demo</span>
             </button>
+
+            {/* Notification Bell */}
+            <NotificationBell />
 
             {/* User Profile Pill */}
             <div className="flex items-center gap-2.5 px-3 py-1 bg-[#1a1f2c] rounded-xl border border-slate-700/80">
