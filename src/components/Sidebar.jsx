@@ -10,6 +10,7 @@ import {
   Users,
   Activity,
   Bell,
+  BarChart3,
   LogOut,
   X,
   ShieldCheck,
@@ -58,6 +59,11 @@ export const Sidebar = ({ isOpen, onClose }) => {
       path: '/notifications',
       icon: Bell,
       badge: unreadCount > 0 ? `${unreadCount}` : null
+    },
+    {
+      name: 'Reports',
+      path: '/reports',
+      icon: BarChart3
     }
   ];
 

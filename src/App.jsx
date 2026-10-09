@@ -16,6 +16,7 @@ import { CustomerProfilePage } from './pages/CustomerProfilePage';
 import { TrackingPage } from './pages/TrackingPage';
 import { DeliveryStatusPage } from './pages/DeliveryStatusPage';
 import { NotificationsPage } from './pages/NotificationsPage';
+import { ReportsPage } from './pages/ReportsPage';
 
 function App() {
   return (
@@ -107,6 +108,16 @@ function App() {
             element={
               <ProtectedRoute>
                 <NotificationsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Protected Routes (Module 8: Reports & Analytics) */}
+          <Route
+            path="/reports"
+            element={
+              <ProtectedRoute>
+                <ReportsPage />
               </ProtectedRoute>
             }
           />
