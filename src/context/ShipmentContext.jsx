@@ -1,5 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { INITIAL_DETAILED_SHIPMENTS, PARCEL_TYPES, DELIVERY_STATUSES } from '../data/shipmentData';
+import {
+  INITIAL_DETAILED_SHIPMENTS,
+  PARCEL_TYPES,
+  DELIVERY_STATUSES,
+  buildInitialHistory
+} from '../data/shipmentData';
 import {
   apiFetchShipments,
   apiGetShipmentById,
@@ -19,7 +24,38 @@ export const ShipmentProvider = ({ children }) => {
     try {
       const stored = localStorage.getItem(SHIPMENTS_STORAGE_KEY);
       if (stored) {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Hydrate each shipment ensuring statusHistory is populated and statuses are normalized
+          const hydrated = parsed.map((s) => {
+            const normalizedStatus = s.deliveryStatus === 'Booked' ? 'Pending' : (s.deliveryStatus || 'Pending');
+            const history = (Array.isArray(s.statusHistory) && s.statusHistory.length > 0)
+              ? s.statusHistory
+              : buildInitialHistory(normalizedStatus, {
+                  origin: s.pickupAddress?.split(',')[1]?.trim() || 'Logistics Origin',
+                  destination: s.deliveryAddress?.split(',')[1]?.trim() || 'Delivery Destination',
+                  date: s.shippingDate || '2026-10-06',
+                  updatedBy: s.senderName || 'Dispatch Operations'
+                });
+            return {
+              ...s,
+              deliveryStatus: normalizedStatus,
+              statusHistory: history
+            };
+          });
+
+          // If stored records lack Cancelled or Failed Delivery examples, merge seed entries to ensure full 7-status testing
+          const hasFailed = hydrated.some((s) => s.deliveryStatus === 'Failed Delivery');
+          const hasCancelled = hydrated.some((s) => s.deliveryStatus === 'Cancelled');
+          if (!hasFailed || !hasCancelled) {
+            const seedMissing = INITIAL_DETAILED_SHIPMENTS.filter(
+              (seed) => !hydrated.some((h) => h.trackingNumber === seed.trackingNumber)
+            );
+            return [...hydrated, ...seedMissing];
+          }
+
+          return hydrated;
+        }
       }
       localStorage.setItem(SHIPMENTS_STORAGE_KEY, JSON.stringify(INITIAL_DETAILED_SHIPMENTS));
       return INITIAL_DETAILED_SHIPMENTS;
@@ -86,6 +122,27 @@ export const ShipmentProvider = ({ children }) => {
     setIsApiSyncing(true);
     try {
       const trackingNumber = shipmentData.trackingNumber || generateTrackingNumber();
+      const initialStatus = shipmentData.deliveryStatus || 'Pending';
+      const timestamp = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      }) + ' ' + new Date().toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      const initialHistory = [
+        {
+          id: `hist-create-${Date.now()}`,
+          status: initialStatus,
+          timestamp,
+          location: shipmentData.pickupAddress?.split(',')[1]?.trim() || 'Logistics Depot',
+          remarks: 'Consignment created & manifest registered in CPTS.',
+          updatedBy: shipmentData.senderName || 'Dispatch Controller'
+        }
+      ];
+
       const newShipment = {
         ...shipmentData,
         id: trackingNumber,
@@ -95,8 +152,9 @@ export const ShipmentProvider = ({ children }) => {
           shipmentData.expectedDeliveryDate ||
           new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         parcelWeight: parseFloat(shipmentData.parcelWeight) || 1.0,
-        deliveryStatus: shipmentData.deliveryStatus || 'Booked',
-        parcelType: shipmentData.parcelType || PARCEL_TYPES[0]
+        deliveryStatus: initialStatus,
+        parcelType: shipmentData.parcelType || PARCEL_TYPES[0],
+        statusHistory: initialHistory
       };
 
       // HTTP POST request to third-party endpoint
@@ -127,9 +185,32 @@ export const ShipmentProvider = ({ children }) => {
         return { success: false };
       }
 
+      let statusHistory = existing.statusHistory || [];
+      if (updatedFields.deliveryStatus && updatedFields.deliveryStatus !== existing.deliveryStatus) {
+        const timestamp = new Date().toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        }) + ' ' + new Date().toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+
+        const historyEntry = {
+          id: `hist-upd-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+          status: updatedFields.deliveryStatus,
+          timestamp,
+          location: updatedFields.location?.trim() || `${existing.pickupAddress?.split(',')[1]?.trim() || 'Distribution'} Hub`,
+          remarks: updatedFields.remarks?.trim() || `Delivery status changed to ${updatedFields.deliveryStatus}.`,
+          updatedBy: updatedFields.updatedBy || 'Operations Lead'
+        };
+        statusHistory = [historyEntry, ...statusHistory];
+      }
+
       const updatedShipment = {
         ...existing,
         ...updatedFields,
+        statusHistory,
         parcelWeight: parseFloat(updatedFields.parcelWeight || existing.parcelWeight) || 1.0
       };
 
@@ -142,6 +223,55 @@ export const ShipmentProvider = ({ children }) => {
     } catch (error) {
       console.error('Error updating shipment:', error);
       toast.error('Failed to update shipment.');
+      return { success: false, error };
+    } finally {
+      setIsApiSyncing(false);
+    }
+  };
+
+  // Dedicated Delivery Status Update method (Module 6)
+  const updateDeliveryStatus = async (id, newStatus, details = {}) => {
+    setIsApiSyncing(true);
+    try {
+      const existing = shipments.find((s) => s.id === id);
+      if (!existing) {
+        toast.error('Shipment not found.');
+        return { success: false };
+      }
+
+      const timestamp = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      }) + ' ' + new Date().toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      const newHistoryItem = {
+        id: `hist-status-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+        status: newStatus,
+        timestamp,
+        location: details.location?.trim() || `${existing.deliveryAddress?.split(',')[1]?.trim() || 'Central'} Gateway Hub`,
+        remarks: details.remarks?.trim() || `Delivery status transition to ${newStatus}.`,
+        updatedBy: details.updatedBy?.trim() || 'Operations Dispatch'
+      };
+
+      const updatedShipment = {
+        ...existing,
+        deliveryStatus: newStatus,
+        statusHistory: [newHistoryItem, ...(existing.statusHistory || [])]
+      };
+
+      // HTTP PUT request replication
+      await apiUpdateShipment(id, updatedShipment);
+
+      setShipments((prev) => prev.map((s) => (s.id === id ? updatedShipment : s)));
+      toast.success(`Delivery status updated to "${newStatus}" for ${existing.trackingNumber}`);
+      return { success: true, shipment: updatedShipment };
+    } catch (error) {
+      console.error('Error updating delivery status:', error);
+      toast.error('Failed to update delivery status.');
       return { success: false, error };
     } finally {
       setIsApiSyncing(false);
@@ -274,6 +404,7 @@ export const ShipmentProvider = ({ children }) => {
         getShipmentById,
         createShipment,
         updateShipment,
+        updateDeliveryStatus,
         deleteShipment,
         refreshRemoteShipments,
         fetchSampleFromThirdPartyApi,

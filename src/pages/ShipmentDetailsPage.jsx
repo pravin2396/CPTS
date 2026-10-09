@@ -60,8 +60,9 @@ export const ShipmentDetailsPage = () => {
     }
   };
 
-  const STAGES = ['Booked', 'Picked Up', 'In Transit', 'Out for Delivery', 'Delivered'];
-  const currentStageIndex = shipment ? STAGES.indexOf(shipment.deliveryStatus) : -1;
+  const STAGES = ['Pending', 'Picked Up', 'In Transit', 'Out for Delivery', 'Delivered'];
+  const normalizedStatus = shipment ? (shipment.deliveryStatus === 'Booked' ? 'Pending' : shipment.deliveryStatus) : '';
+  const currentStageIndex = shipment ? STAGES.indexOf(normalizedStatus) : -1;
 
   return (
     <div className="min-h-screen w-full bg-[#0a0c10] text-slate-100 font-sans antialiased relative selection:bg-amber-500 selection:text-slate-950 flex">

@@ -31,7 +31,9 @@ export const generateTrackingDetails = (shipment) => {
   let carrierVehicle = 'Van #DP-104';
   let estimatedDaysLeft = 2;
 
-  switch (deliveryStatus) {
+  const normalizedStatus = deliveryStatus === 'Booked' ? 'Pending' : deliveryStatus;
+
+  switch (normalizedStatus) {
     case 'Delivered':
       progressPercentage = 100;
       currentLocation = `${deliveryAddress} (Signed & Delivered)`;
@@ -56,7 +58,19 @@ export const generateTrackingDetails = (shipment) => {
       carrierVehicle = 'Pickup Fleet Truck #DP-211';
       estimatedDaysLeft = 2;
       break;
-    case 'Booked':
+    case 'Cancelled':
+      progressPercentage = 0;
+      currentLocation = `${originCity} Terminal (Consignment Cancelled)`;
+      carrierVehicle = 'Dispatch Voided';
+      estimatedDaysLeft = 'Cancelled';
+      break;
+    case 'Failed Delivery':
+      progressPercentage = 85;
+      currentLocation = `${destCity} Local Terminal (Delivery Attempt Failed - Returned to Depot)`;
+      carrierVehicle = 'Exception Hold Bay 2';
+      estimatedDaysLeft = 1;
+      break;
+    case 'Pending':
     default:
       progressPercentage = 15;
       currentLocation = `${originCity} Dispatch Facility (Awaiting Collection)`;
@@ -109,19 +123,36 @@ export const generateTrackingDetails = (shipment) => {
     }
   ];
 
-  const statusOrder = ['Booked', 'Picked Up', 'In Transit', 'Out for Delivery', 'Delivered'];
-  const currentIndex = statusOrder.indexOf(deliveryStatus);
+  const statusOrder = ['Pending', 'Picked Up', 'In Transit', 'Out for Delivery', 'Delivered'];
+  let effectiveStatus = deliveryStatus === 'Booked' ? 'Pending' : deliveryStatus;
+  if (effectiveStatus === 'Failed Delivery') effectiveStatus = 'Out for Delivery';
+  if (effectiveStatus === 'Cancelled') effectiveStatus = 'Pending';
+  
+  const currentIndex = statusOrder.indexOf(effectiveStatus);
 
-  const history = STAGES.map((step, idx) => {
-    const isCompleted = currentIndex >= idx;
-    const isCurrent = currentIndex === idx;
-    return {
-      ...step,
-      isCompleted,
-      isCurrent,
-      status: isCompleted ? (isCurrent ? 'in-progress' : 'completed') : 'upcoming'
-    };
-  });
+  // If shipment has custom audit statusHistory recorded, format it into timeline stages
+  const history = (Array.isArray(shipment.statusHistory) && shipment.statusHistory.length > 0)
+    ? [...shipment.statusHistory].reverse().map((entry, idx, arr) => ({
+        key: entry.status,
+        title: `${entry.status} Checkpoint`,
+        description: entry.remarks,
+        location: entry.location,
+        date: entry.timestamp.split(' ')[0] || shippingDate || '2026-10-06',
+        time: entry.timestamp.split(' ').slice(1).join(' ') || '12:00 PM',
+        isCompleted: true,
+        isCurrent: idx === arr.length - 1,
+        status: idx === arr.length - 1 ? 'in-progress' : 'completed'
+      }))
+    : STAGES.map((step, idx) => {
+        const isCompleted = currentIndex >= idx;
+        const isCurrent = currentIndex === idx;
+        return {
+          ...step,
+          isCompleted,
+          isCurrent,
+          status: isCompleted ? (isCurrent ? 'in-progress' : 'completed') : 'upcoming'
+        };
+      });
 
   return {
     ...shipment,

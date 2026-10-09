@@ -75,42 +75,93 @@ export const SkeletonRow = () => {
   );
 };
 
-export const StatusBadge = ({ status }) => {
-  switch (status) {
-    case 'Delivered':
+export const StatusBadge = ({ status, size = 'md', className = '' }) => {
+  const normalized = status === 'Booked' ? 'Pending' : status;
+
+  const sizeClasses = {
+    sm: 'text-[10px] px-2 py-0.5',
+    md: 'text-[11px] px-2.5 py-1',
+    lg: 'text-xs px-3 py-1.5'
+  }[size] || 'text-[11px] px-2.5 py-1';
+
+  switch (normalized) {
+    case 'Pending':
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-          Delivered
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-full font-bold bg-amber-500/15 text-amber-300 border border-amber-500/35 shadow-sm shadow-amber-500/10 ${sizeClasses} ${className}`}
+        >
+          <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-pulse" />
+          Pending
         </span>
       );
+
+    case 'Picked Up':
+      return (
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-full font-bold bg-purple-500/15 text-purple-300 border border-purple-500/35 shadow-sm shadow-purple-500/10 ${sizeClasses} ${className}`}
+        >
+          <span className="h-1.5 w-1.5 rounded-full bg-purple-400" />
+          Picked Up
+        </span>
+      );
+
     case 'In Transit':
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-500/15 text-blue-400 border border-blue-500/30">
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-full font-bold bg-blue-500/15 text-blue-400 border border-blue-500/35 shadow-sm shadow-blue-500/10 ${sizeClasses} ${className}`}
+        >
           <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse" />
           In Transit
         </span>
       );
+
     case 'Out for Delivery':
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
-          <span className="h-1.5 w-1.5 rounded-full bg-amber-400 animate-ping" />
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-full font-bold bg-orange-500/15 text-orange-400 border border-orange-500/35 shadow-sm shadow-orange-500/10 ${sizeClasses} ${className}`}
+        >
+          <span className="h-1.5 w-1.5 rounded-full bg-orange-400 animate-ping" />
           Out for Delivery
         </span>
       );
-    case 'Picked Up':
+
+    case 'Delivered':
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-violet-500/15 text-violet-400 border border-violet-500/30">
-          <span className="h-1.5 w-1.5 rounded-full bg-violet-400" />
-          Picked Up
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-full font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/35 shadow-sm shadow-emerald-500/10 ${sizeClasses} ${className}`}
+        >
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+          Delivered
         </span>
       );
-    case 'Booked':
+
+    case 'Cancelled':
+      return (
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-full font-bold bg-slate-500/20 text-slate-300 border border-slate-600/40 shadow-sm ${sizeClasses} ${className}`}
+        >
+          <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
+          Cancelled
+        </span>
+      );
+
+    case 'Failed Delivery':
+      return (
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-full font-bold bg-rose-500/15 text-rose-400 border border-rose-500/35 shadow-sm shadow-rose-500/10 ${sizeClasses} ${className}`}
+        >
+          <span className="h-1.5 w-1.5 rounded-full bg-rose-400 animate-pulse" />
+          Failed Delivery
+        </span>
+      );
+
     default:
       return (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-500/15 text-slate-300 border border-slate-500/30">
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-full font-bold bg-slate-500/15 text-slate-300 border border-slate-500/30 ${sizeClasses} ${className}`}
+        >
           <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-          Booked
+          {status || 'Unknown'}
         </span>
       );
   }

@@ -44,8 +44,9 @@ export const ShipmentDetailsModal = ({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const STAGES = ['Booked', 'Picked Up', 'In Transit', 'Out for Delivery', 'Delivered'];
-  const currentStageIndex = STAGES.indexOf(shipment.deliveryStatus);
+  const STAGES = ['Pending', 'Picked Up', 'In Transit', 'Out for Delivery', 'Delivered'];
+  const normalizedStatus = shipment.deliveryStatus === 'Booked' ? 'Pending' : shipment.deliveryStatus;
+  const currentStageIndex = STAGES.indexOf(normalizedStatus);
 
   return (
     <Modal
