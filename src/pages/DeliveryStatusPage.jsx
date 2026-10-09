@@ -4,6 +4,7 @@ import { Sidebar } from '../components/Sidebar';
 import { StatusBadge, EmptyState } from '../components/ui/FeedbackComponents';
 import { UpdateStatusModal } from '../components/delivery/UpdateStatusModal';
 import { StatusHistoryModal } from '../components/delivery/StatusHistoryModal';
+import { NotificationBell } from '../components/notifications/NotificationBell';
 import { useNavigate } from 'react-router-dom';
 import {
   Activity,
@@ -140,6 +141,9 @@ export const DeliveryStatusPage = () => {
               <RotateCcw className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Reset Seed</span>
             </button>
+
+            {/* Notification Bell */}
+            <NotificationBell />
           </div>
         </header>
 

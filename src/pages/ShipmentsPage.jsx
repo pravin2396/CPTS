@@ -10,6 +10,7 @@ import {
   EmptyState,
   SkeletonRow
 } from '../components/ui/FeedbackComponents';
+import { NotificationBell } from '../components/notifications/NotificationBell';
 import {
   Boxes,
   Plus,
@@ -181,6 +182,9 @@ export const ShipmentsPage = () => {
               <RotateCcw className="h-4 w-4" />
               <span className="hidden sm:inline">Reset Seed</span>
             </button>
+
+            {/* Notification Bell */}
+            <NotificationBell />
 
             <button
               onClick={() => {

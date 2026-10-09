@@ -14,12 +14,20 @@ import {
   fetchThirdPartyCustomers,
   fetchThirdPartyParcelManifests
 } from '../services/shipmentApiService';
+import { useNotifications } from './NotificationContext';
 import { toast } from 'react-toastify';
 
 const ShipmentContext = createContext();
 const SHIPMENTS_STORAGE_KEY = 'cpts_shipments';
 
 export const ShipmentProvider = ({ children }) => {
+  const {
+    notifyShipmentCreated,
+    notifyStatusUpdated,
+    notifyDeliveryCompleted,
+    notifyFailedDelivery
+  } = useNotifications();
+
   const [shipments, setShipments] = useState(() => {
     try {
       const stored = localStorage.getItem(SHIPMENTS_STORAGE_KEY);
@@ -163,6 +171,9 @@ export const ShipmentProvider = ({ children }) => {
       newShipment.apiId = apiResult.apiId;
 
       setShipments((prev) => [newShipment, ...prev]);
+      if (notifyShipmentCreated) {
+        notifyShipmentCreated(newShipment);
+      }
       toast.success(`Shipment ${trackingNumber} created successfully!`);
       return { success: true, shipment: newShipment };
     } catch (error) {
@@ -218,6 +229,15 @@ export const ShipmentProvider = ({ children }) => {
       await apiUpdateShipment(id, updatedShipment);
 
       setShipments((prev) => prev.map((s) => (s.id === id ? updatedShipment : s)));
+      if (updatedFields.deliveryStatus && updatedFields.deliveryStatus !== existing.deliveryStatus) {
+        if (updatedFields.deliveryStatus === 'Delivered' && notifyDeliveryCompleted) {
+          notifyDeliveryCompleted(updatedShipment, updatedFields.location, updatedFields.remarks);
+        } else if (updatedFields.deliveryStatus === 'Failed Delivery' && notifyFailedDelivery) {
+          notifyFailedDelivery(updatedShipment, updatedFields.remarks, updatedFields.location);
+        } else if (notifyStatusUpdated) {
+          notifyStatusUpdated(updatedShipment, updatedFields.deliveryStatus, updatedFields.location, updatedFields.remarks);
+        }
+      }
       toast.success(`Shipment ${updatedShipment.trackingNumber} updated successfully!`);
       return { success: true, shipment: updatedShipment };
     } catch (error) {
@@ -267,6 +287,16 @@ export const ShipmentProvider = ({ children }) => {
       await apiUpdateShipment(id, updatedShipment);
 
       setShipments((prev) => prev.map((s) => (s.id === id ? updatedShipment : s)));
+
+      // Trigger respective Module 7 notifications
+      if (newStatus === 'Delivered' && notifyDeliveryCompleted) {
+        notifyDeliveryCompleted(updatedShipment, details.location, details.remarks);
+      } else if (newStatus === 'Failed Delivery' && notifyFailedDelivery) {
+        notifyFailedDelivery(updatedShipment, details.remarks, details.location);
+      } else if (notifyStatusUpdated) {
+        notifyStatusUpdated(updatedShipment, newStatus, details.location, details.remarks);
+      }
+
       toast.success(`Delivery status updated to "${newStatus}" for ${existing.trackingNumber}`);
       return { success: true, shipment: updatedShipment };
     } catch (error) {

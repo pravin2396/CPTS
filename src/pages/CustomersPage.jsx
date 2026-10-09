@@ -5,6 +5,7 @@ import { Sidebar } from '../components/Sidebar';
 import { CustomerModal } from '../components/CustomerModal';
 import { CustomerProfileModal } from '../components/CustomerProfileModal';
 import { ConfirmModal, EmptyState, SkeletonRow } from '../components/ui/FeedbackComponents';
+import { NotificationBell } from '../components/notifications/NotificationBell';
 import {
   Users,
   Plus,
@@ -174,6 +175,9 @@ export const CustomersPage = () => {
               <RotateCcw className="h-4 w-4" />
               <span className="hidden sm:inline">Reset Seed</span>
             </button>
+
+            {/* Notification Bell */}
+            <NotificationBell />
 
             <button
               onClick={() => {

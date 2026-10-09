@@ -4,6 +4,7 @@ import { useShipments } from '../context/ShipmentContext';
 import { generateTrackingDetails } from '../utils/trackingGenerator';
 import { Sidebar } from '../components/Sidebar';
 import { StatusBadge, EmptyState } from '../components/ui/FeedbackComponents';
+import { NotificationBell } from '../components/notifications/NotificationBell';
 import {
   Search,
   X,
@@ -220,19 +221,24 @@ export const TrackingPage = () => {
             </div>
           </div>
 
-          {/* Header Action: Track Multiple Shipments Toggle */}
-          <button
-            type="button"
-            onClick={() => setActiveTab(activeTab === 'single' ? 'multiple' : 'single')}
-            className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-2 border ${
-              activeTab === 'multiple'
-                ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 border-amber-400 font-black shadow-lg shadow-amber-500/20'
-                : 'bg-[#10141d] text-slate-300 hover:text-amber-300 hover:border-amber-500/40 border-slate-800'
-            }`}
-          >
-            <Layers className="h-4 w-4" />
-            <span>{activeTab === 'multiple' ? '← Back to Single Tracking' : `Track Multiple (${selectedMultiTracking.length})`}</span>
-          </button>
+          <div className="flex items-center gap-2.5">
+            {/* Notification Bell */}
+            <NotificationBell />
+
+            {/* Header Action: Track Multiple Shipments Toggle */}
+            <button
+              type="button"
+              onClick={() => setActiveTab(activeTab === 'single' ? 'multiple' : 'single')}
+              className={`px-3.5 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-2 border ${
+                activeTab === 'multiple'
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 border-amber-400 font-black shadow-lg shadow-amber-500/20'
+                  : 'bg-[#10141d] text-slate-300 hover:text-amber-300 hover:border-amber-500/40 border-slate-800'
+              }`}
+            >
+              <Layers className="h-4 w-4" />
+              <span>{activeTab === 'multiple' ? '← Back to Single Tracking' : `Track Multiple (${selectedMultiTracking.length})`}</span>
+            </button>
+          </div>
         </header>
 
         {/* Content Area */}

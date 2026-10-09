@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
 import {
   Boxes,
   LayoutDashboard,
@@ -8,6 +9,7 @@ import {
   Truck,
   Users,
   Activity,
+  Bell,
   LogOut,
   X,
   ShieldCheck,
@@ -16,6 +18,7 @@ import {
 
 export const Sidebar = ({ isOpen, onClose }) => {
   const { currentUser, logoutUser } = useAuth();
+  const { unreadCount } = useNotifications();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -49,6 +52,12 @@ export const Sidebar = ({ isOpen, onClose }) => {
       name: 'Delivery Status',
       path: '/delivery-status',
       icon: Activity
+    },
+    {
+      name: 'Notifications',
+      path: '/notifications',
+      icon: Bell,
+      badge: unreadCount > 0 ? `${unreadCount}` : null
     }
   ];
 
@@ -135,7 +144,7 @@ export const Sidebar = ({ isOpen, onClose }) => {
                   <span>{item.name}</span>
                 </div>
                 {item.badge && (
-                  <span className="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-slate-900/60 text-slate-950 border border-slate-900/20">
+                  <span className="text-[10px] font-black font-mono px-2 py-0.5 rounded-full bg-amber-400 text-slate-950 shadow-sm shadow-amber-500/20">
                     {item.badge}
                   </span>
                 )}
