@@ -11,6 +11,8 @@ import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { ShipmentsPage } from './pages/ShipmentsPage';
 import { ShipmentDetailsPage } from './pages/ShipmentDetailsPage';
+import { CustomersPage } from './pages/CustomersPage';
+import { CustomerProfilePage } from './pages/CustomerProfilePage';
 
 function App() {
   return (
@@ -32,7 +34,7 @@ function App() {
             }
           />
 
-          {/* Protected Routes (Module 3: Shipment Management & Details) */}
+          {/* Protected Routes (Module 3: Shipment Management & Details - Intact) */}
           <Route
             path="/shipments"
             element={
@@ -46,6 +48,24 @@ function App() {
             element={
               <ProtectedRoute>
                 <ShipmentDetailsPage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Protected Routes (Module 4: Customer Management & Profile) */}
+          <Route
+            path="/customers"
+            element={
+              <ProtectedRoute>
+                <CustomersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/customers/:id"
+            element={
+              <ProtectedRoute>
+                <CustomerProfilePage />
               </ProtectedRoute>
             }
           />

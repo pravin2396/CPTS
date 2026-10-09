@@ -34,6 +34,11 @@ export const Sidebar = ({ isOpen, onClose }) => {
       name: 'Shipments',
       path: '/shipments',
       icon: Package
+    },
+    {
+      name: 'Customers',
+      path: '/customers',
+      icon: Users
     }
   ];
 

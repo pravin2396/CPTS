@@ -72,7 +72,7 @@ export const ShipmentProvider = ({ children }) => {
     setIsLoading(true);
     try {
       await apiFetchShipments(8);
-      toast.success('Manifest synced with remote API (GET replicated in Network tab)');
+      toast.success('Manifest synced with remote API successfully.');
     } catch (error) {
       console.warn('Network sync notice:', error);
     } finally {
@@ -105,7 +105,7 @@ export const ShipmentProvider = ({ children }) => {
       newShipment.apiId = apiResult.apiId;
 
       setShipments((prev) => [newShipment, ...prev]);
-      toast.success(`Shipment ${trackingNumber} created (POST request replicated in Network tab)!`);
+      toast.success(`Shipment ${trackingNumber} created successfully!`);
       return { success: true, shipment: newShipment };
     } catch (error) {
       console.error('Error creating shipment:', error);
@@ -137,7 +137,7 @@ export const ShipmentProvider = ({ children }) => {
       await apiUpdateShipment(id, updatedShipment);
 
       setShipments((prev) => prev.map((s) => (s.id === id ? updatedShipment : s)));
-      toast.success(`Shipment ${updatedShipment.trackingNumber} updated (PUT request replicated in Network tab)!`);
+      toast.success(`Shipment ${updatedShipment.trackingNumber} updated successfully!`);
       return { success: true, shipment: updatedShipment };
     } catch (error) {
       console.error('Error updating shipment:', error);
@@ -159,7 +159,7 @@ export const ShipmentProvider = ({ children }) => {
       await apiDeleteShipment(id);
 
       setShipments((prev) => prev.filter((s) => s.id !== id));
-      toast.info(`Shipment ${toDelete?.trackingNumber || id} deleted (DELETE request replicated in Network tab).`);
+      toast.info(`Shipment ${toDelete?.trackingNumber || id} deleted successfully.`);
       return { success: true };
     } catch (error) {
       console.error('Error deleting shipment:', error);
@@ -234,7 +234,7 @@ export const ShipmentProvider = ({ children }) => {
         notes: cargo?.title ? `Consignment cargo: ${cargo.title} via JSONPlaceholder & DummyJSON` : 'Standard freight dispatch.'
       };
 
-      toast.info('Fetched realistic sample from 3rd-Party API (GET replicated in Network tab)!');
+      toast.info('Fetched realistic sample from 3rd-Party API successfully.');
       return sampleData;
     } catch (error) {
       console.warn('API sample generation fallback:', error);
