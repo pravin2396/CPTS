@@ -144,11 +144,7 @@ export const DashboardPage = () => {
           </div>
         </header>
 
-<<<<<<< HEAD
         {/* MAIN DASHBOARD CONTENT (Edge-to-Edge Stretched) */}
-=======
-        {/* MAIN DASHBOARD CONTENT */}
->>>>>>> Module/6/Delivery-Status
         <main className="relative z-10 w-full px-4 sm:px-6 lg:px-8 py-8 space-y-8">
           
           {/* Welcome & Status Banner */}
