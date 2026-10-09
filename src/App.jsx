@@ -13,6 +13,7 @@ import { ShipmentsPage } from './pages/ShipmentsPage';
 import { ShipmentDetailsPage } from './pages/ShipmentDetailsPage';
 import { CustomersPage } from './pages/CustomersPage';
 import { CustomerProfilePage } from './pages/CustomerProfilePage';
+import { TrackingPage } from './pages/TrackingPage';
 
 function App() {
   return (
@@ -52,7 +53,7 @@ function App() {
             }
           />
 
-          {/* Protected Routes (Module 4: Customer Management & Profile) */}
+          {/* Protected Routes (Module 4: Customer Management & Profile - Intact) */}
           <Route
             path="/customers"
             element={
@@ -66,6 +67,24 @@ function App() {
             element={
               <ProtectedRoute>
                 <CustomerProfilePage />
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Protected Routes (Module 5: Parcel Tracking & Telemetry) */}
+          <Route
+            path="/tracking"
+            element={
+              <ProtectedRoute>
+                <TrackingPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/tracking/:trackingNumber"
+            element={
+              <ProtectedRoute>
+                <TrackingPage />
               </ProtectedRoute>
             }
           />
